@@ -12,10 +12,10 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 import matplotlib.pyplot as plt
 
-from load_dataset import LoadDataset, get_subset_random_sampler
+from Util.load_dataset import LoadDataset, get_subset_random_sampler
 from models.resnet50 import ResNet50
 
-from runtime_args import args
+from Util.runtime_args import args
 
 print("Use cbam:", args.use_cbam)
 
