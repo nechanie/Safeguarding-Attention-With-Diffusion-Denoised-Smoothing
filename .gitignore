@@ -161,3 +161,4 @@ cython_debug/
 
 ResNet-50-CBAM-PyTorch/runs/
 ResNet-50-CBAM-PyTorch/datasets/
+datasets/
