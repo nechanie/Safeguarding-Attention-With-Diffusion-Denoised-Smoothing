@@ -15,10 +15,10 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 
 from models.resnet50 import ResNet50
-from Util.runtime_args import args
-from Util.load_dataset import LoadDataset, get_subset_random_sampler
-from Util.plot import plot_loss_acc
-from Util.helpers import calculate_accuracy
+from runtime_args import args
+from load_dataset import LoadDataset, get_subset_random_sampler
+from plot import plot_loss_acc
+from helpers import calculate_accuracy
 
 
 now = datetime.now()
