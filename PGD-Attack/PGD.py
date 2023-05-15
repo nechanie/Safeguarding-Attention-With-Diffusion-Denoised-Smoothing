@@ -1,6 +1,7 @@
 import time
 import torch
 import torch.nn as nn
+from tqdm import tqdm
 
 
 def pgd(input, labels, model, niter, epsilon, stepsize, loss = None, randinit = False):
@@ -24,11 +25,10 @@ def pgd(input, labels, model, niter, epsilon, stepsize, loss = None, randinit = 
         input = input + random_perturbations_up_or_down * epsilon   # bound the perturbations range to (-epsilon, epsilon) and apply them to x
         input = torch.clamp(input, min=0, max=1)    # make sure x is within range 0 to 1 after applying perturbations
 
-    for _ in range(niter):
+    for _ in tqdm(range(niter)):
         input_copy.requires_grad = True
-        model.zero_grad()
         pred = model(input_copy)
-        loss_obj = loss(pred, labels)
+        loss_obj = loss(pred[1], labels)
         loss_obj.backward()                      
         grad = input_copy.grad.detach()
         grad = grad.sign()

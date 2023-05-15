@@ -10,13 +10,26 @@ from helper_files.runtime_args import args
 
 # Other
 import PGD
+import matplotlib.pyplot as plt
 
 device = torch.device("cuda:0" if torch.cuda.is_available() and args.device == 'gpu' else 'cpu')
 
 
-# TODO: test this func
-def generate_adversarial_images(count, model, dataset, niter, epsilon):
-    generated_images = []
+# TODO: test this func extensively
+def generate_adversarial_images(count, model, dataset, niter, epsilon, stepsize, loss, randinit = False):
+    images = []
+    for i, entry in enumerate(dataset):
+        inputs = entry['image'].to(device)
+        labels = entry['label'].to(device)
+               
+        images.append(PGD.pgd(inputs, labels, model, niter, epsilon, stepsize, loss, randinit))
+        plt.imshow(inputs[0].permute(1, 2, 0).numpy())
+        plt.imshow((images[0][0]).permute(1,2,0).numpy())
+        if((i + 1) * args.batch_size > count):
+            
+            break
+
+    return images
 
 
 
@@ -24,14 +37,19 @@ def generate_adversarial_images(count, model, dataset, niter, epsilon):
 
 if __name__ == "__main__":
     # Dataset Creation
-    dataset = DatasetLoader.LoadDataset(dataset_folder_path=args.data_folder, image_size=args.img_size, image_depth=args.img_depth, train=True,
+    dataset = DatasetLoader.LoadDataset(dataset_folder_path=args.data_folder, image_size=args.img_size, image_depth=args.img_depth, train=False,
                             transform=transforms.ToTensor())
-    dataloader = DataLoader(dataset, shuffle=True,
+    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True,
                                     num_workers=args.num_workers, pin_memory=True)
     
     model = torch.load(args.pretrained_path, map_location=device)
     model.eval()
 
-    images = generate_adversarial_images(args.PGD_image_count, model, dataloader, args.PGD_niter, args.PGD_epsilon)
+    
+
+    loss = nn.CrossEntropyLoss().to(device)
+
+    images = generate_adversarial_images(args.PGD_image_count, model, dataloader, args.PGD_niter, args.PGD_epsilon, args.PGD_stepsize, loss)
+
     
 
