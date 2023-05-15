@@ -1,12 +1,6 @@
 import time
 import torch
 import torch.nn as nn
-<<<<<<< Updated upstream
-=======
-import Util.load_dataset as DatasetLoader
-from Util.runtime_args import args
-
->>>>>>> Stashed changes
 
 
 def pgd(input, labels, model, niter, epsilon, stepsize, loss = None, randinit = False):
@@ -44,16 +38,4 @@ def pgd(input, labels, model, niter, epsilon, stepsize, loss = None, randinit = 
         input_copy = input_copy.detach()
         input_copy = torch.clamp(input_copy, min=0, max=1)
 
-<<<<<<< Updated upstream
     return input_copy
-=======
-    return input_copy
-
-
-
-
-
-
-
-
->>>>>>> Stashed changes
