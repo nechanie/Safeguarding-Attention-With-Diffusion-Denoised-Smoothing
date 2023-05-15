@@ -61,16 +61,16 @@ class LoadDataset(Dataset):
         image_path_label = []
 
         if self.train:
-            folder_path = f"{self.dataset_folder_path.rstrip('/')}/train/"
+            folder_path = f"{self.dataset_folder_path.rstrip('/')}\\train\\"
         else:
-            folder_path = f"{self.dataset_folder_path.rstrip('/')}/test/"
+            folder_path = f"{self.dataset_folder_path.rstrip('/')}\\test\\"
 
         for x in glob.glob(folder_path + "**", recursive=True):
 
             if not x.endswith('jpg'):
                 continue
 
-            class_idx = self.classes.index(x.split('/')[-2])
+            class_idx = self.classes.index(x.split('\\')[-2])
             image_path_label.append((x, int(class_idx)))
 
         return image_path_label

@@ -11,6 +11,8 @@ from helper_files.runtime_args import args
 # Other
 import PGD
 
+device = torch.device("cuda:0" if torch.cuda.is_available() and args.device == 'gpu' else 'cpu')
+
 
 # TODO: test this func
 def generate_adversarial_images(count, model, dataset, niter, epsilon):
@@ -27,7 +29,8 @@ if __name__ == "__main__":
     dataloader = DataLoader(dataset, shuffle=True,
                                     num_workers=args.num_workers, pin_memory=True)
     
-    model = torch.load(args.pretrained_path)
+    model = torch.load(args.pretrained_path, map_location=device)
+    model.eval()
 
     images = generate_adversarial_images(args.PGD_image_count, model, dataloader, args.PGD_niter, args.PGD_epsilon)
     
