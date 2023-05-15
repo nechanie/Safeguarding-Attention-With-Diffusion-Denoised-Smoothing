@@ -24,6 +24,7 @@ parser.add_argument('--img_depth', type=int, help='Specify the depth of the inpu
 parser.add_argument('--device', type=str, help='Specify which device to be used for the evaluation. Either "cpu" or "gpu".', default='gpu')
 parser.add_argument('--pretrained_path', type=str, help='Specify the path to a trained PyTorch model.')
 
+# TODO: find good default hyperparameters
 parser.add_argument('--PGD_image_count', type=int, default=10)
 parser.add_argument('--PGD_niter', type=int, default=100)
 parser.add_argument('--PGD_epsilon', type=float, default= 1e-3)
