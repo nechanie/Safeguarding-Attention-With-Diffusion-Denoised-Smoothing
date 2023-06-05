@@ -27,7 +27,7 @@ DIR_PATH = f'runs/{FORMATTED_DATETIME}/'
 
 os.mkdir(DIR_PATH)
 
-DATASET_SIZE = 1.0
+DATASET_SIZE = 0.05
 
 # device = torch.device("cuda:0" if torch.cuda.is_available() and args.device == 'gpu' else 'cpu')
 
@@ -55,33 +55,7 @@ def train(gpu, args):
     # rank = args.rank * args.gpus + gpu
     # world_size = args.gpus * args.nodes
 
-
     # dist.init_process_group(backend='nccl', init_method='env://', world_size=world_size, rank=rank)
-
-    model = ResNet50(image_depth=args.img_depth, num_classes=args.num_classes, use_cbam=args.use_cbam)
-    torch.cuda.set_device(gpu)
-    model.cuda(gpu)
-
-    optimizer = Adam(model.parameters(), lr=args.learning_rate)
-    lr_decay = lr_scheduler.ExponentialLR(optimizer, gamma=args.decay_rate)
-    criterion = torch.nn.CrossEntropyLoss().cuda(gpu)
-
-    print(f"Model details:\n" \
-        + f"Opt: {optimizer}\n" \
-        + f"Lr_decay: {lr_decay}\n" \
-        + f"Crit: {criterion}\n" \
-        + f"Batch_size: {args.batch_size}\n" \
-        + f"Epochs: {args.epoch}\n" \
-        + f"Dataset: {args.data_folder}\n" \
-        + f"Dataset Size: {DATASET_SIZE}\n" \
-        + f"Cbam?: {args.use_cbam}\n",
-        flush=True
-    )
-
-    summary(model, (3, 224, 224))
-
-
-    # model = nn.parallel.DistributedDataParallel(model, device_ids=[gpu])
 
     train_dataset = LoadDataset(dataset_folder_path=args.data_folder, image_size=args.img_size, image_depth=args.img_depth, train=True,
                             transform=transforms.ToTensor())
@@ -102,6 +76,34 @@ def train(gpu, args):
                                     num_workers=args.num_workers, pin_memory=True, sampler=train_subset_sampler)
     test_generator = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers,
                                     pin_memory=True, sampler=test_subset_sampler)
+
+    print("Total dataset size:", len(train_generator))
+    num_classes = len(train_dataset.classes)
+
+    model = ResNet50(image_depth=args.img_depth, num_classes=num_classes, use_cbam=args.use_cbam)
+    torch.cuda.set_device(gpu)
+    model.cuda(gpu)
+
+    optimizer = Adam(model.parameters(), lr=args.learning_rate)
+    lr_decay = lr_scheduler.ExponentialLR(optimizer, gamma=args.decay_rate)
+    criterion = torch.nn.CrossEntropyLoss().cuda(gpu)
+
+    print(f"Model details:\n" \
+        + f"Opt: {optimizer}\n" \
+        + f"Lr_decay: {lr_decay}\n" \
+        + f"Crit: {criterion}\n" \
+        + f"Batch_size: {args.batch_size}\n" \
+        + f"Epochs: {args.epoch}\n" \
+        + f"Dataset: {args.data_folder}\n" \
+        + f"Dataset Size: {DATASET_SIZE}\n" \
+        + f"Num Classes: {num_classes}\n" \
+        + f"Cbam?: {args.use_cbam}\n",
+        flush=True
+    )
+
+    summary(model, (3, 224, 224))
+    # model = nn.parallel.DistributedDataParallel(model, device_ids=[gpu])
+
 
     start_time = time.time()
 
