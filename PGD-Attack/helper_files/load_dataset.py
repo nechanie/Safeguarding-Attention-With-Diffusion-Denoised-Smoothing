@@ -16,12 +16,14 @@ from torch.utils.data.sampler import SubsetRandomSampler
 def get_subset_random_sampler(dataset, dataset_size):
     indices = list(range(len(dataset)))    
 
-    # random_seed = 42    # We always get the same subset unless you change this seed.
-    # random_seed = np.random.seed(random_seed)
-    # np.random.shuffle(indices)
+    random_seed = 42    # We always get the same subset unless you change this seed.
+    np.random.seed(random_seed)
+    torch.manual_seed(random_seed)
+    np.random.shuffle(indices)
+    # print(indices[:10])
     
     subset_len = int(len(dataset) * dataset_size)
-    # subset = torch.utils.data.Subset(dataset, indices[:subset_len])
+    subset = torch.utils.data.Subset(dataset, indices[:subset_len])
     # sampler = torch.utils.data.SequentialSampler(subset)
 
     sampler = SubsetRandomSampler(indices[:subset_len])   # Use this to randomize the random subset
@@ -60,14 +62,15 @@ class LoadDataset(Dataset):
 
         image_path_label = []
 
+        print(self.dataset_folder_path.rstrip('\\'))
         if self.train:
-            folder_path = f"{self.dataset_folder_path.rstrip('/')}\\train\\"
+            folder_path = self.dataset_folder_path.rstrip('\\') + "\\train\\"
         else:
-            folder_path = f"{self.dataset_folder_path.rstrip('/')}\\test\\"
+            folder_path = self.dataset_folder_path.rstrip('\\') + "\\test\\"
 
         for x in glob.glob(folder_path + "**", recursive=True):
 
-            if not x.endswith('jpg'):
+            if not x.endswith('jpg') and not x.endswith('png'):
                 continue
 
             class_idx = self.classes.index(x.split('\\')[-2])
@@ -117,7 +120,7 @@ class LoadInputImages(Dataset):
     def __init__(self, input_folder, image_size, image_depth, transform=None):
         '''Param init.
         '''
-        self.input_folder = input_folder.rstrip('/') + '/'
+        self.input_folder = input_folder.rstrip('\\') + '\\'
         self.image_size = image_size
         self.image_depth = image_depth
         self.transform = transform

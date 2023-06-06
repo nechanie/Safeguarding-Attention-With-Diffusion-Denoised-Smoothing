@@ -4,6 +4,8 @@ import torch.nn as nn
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image
+from tqdm import tqdm
+import os
 
 # Util imports
 from helper_files import load_dataset as DatasetLoader
@@ -14,7 +16,7 @@ import PGD
 import matplotlib.pyplot as plt
 
 device = torch.device("cuda:0" if torch.cuda.is_available() and args.device == 'gpu' else 'cpu')
-DEBUG = True
+DEBUG = args.DEBUG
 
 # TODO: test this func thoroughly
 def generate_adversarial_images(count, model, dataset, niter, epsilon, stepsize, randinit = False):
@@ -39,6 +41,16 @@ def generate_adversarial_images(count, model, dataset, niter, epsilon, stepsize,
 
     return (images, outLabels)
 
+def save_all_adversarial_images(dirname, images, labels):
+    counts = [0 for _ in range(10)]
+    for idx in tqdm(range(args.PGD_image_count)):
+        batch = idx//args.batch_size
+        num = idx%args.batch_size
+        label = labels[batch][num]
+        filename = dirname + "/" + str(label.item()) + "/" + str(counts[label.item()]) + ".png"
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        save_image(images[batch][num], filename)
+        counts[label] = counts[label] + 1
 
 
 
@@ -48,17 +60,27 @@ if __name__ == "__main__":
     print(device)
     # Dataset Creation
     dataset = DatasetLoader.LoadDataset(dataset_folder_path=args.data_folder, image_size=args.img_size, image_depth=args.img_depth, train=False,
-                            transform=transforms.ToTensor())
-    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True,
-                                    num_workers=args.num_workers, pin_memory=True)
+                                transform=transforms.ToTensor())
+
+    sampler = DatasetLoader.get_subset_random_sampler(dataset, 1.0)
+
+    test_generator = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers,
+                                    pin_memory=True, sampler=sampler)
+
+    #print("Total dataset size:", len(test_generator))
+    #num_classes = len(test_generator.classes)
     
     model = torch.load(args.pretrained_path, map_location=device)
     model.eval()
     
 
-
-    images, labels = generate_adversarial_images(args.PGD_image_count, model, dataloader, args.PGD_niter, args.PGD_epsilon, args.PGD_stepsize)
+    print(f"\n== Generating Adversarial Images with epsilon {args.PGD_epsilon}\n")
+    images, labels = generate_adversarial_images(args.PGD_image_count, model, test_generator, args.PGD_niter, args.PGD_epsilon, args.PGD_stepsize)
+    print("\n== Saving Images to drive\n")
+    save_all_adversarial_images(f"{args.PGD_save_path}/epsilon_{args.PGD_epsilon}_niter_{args.PGD_niter}", images, labels)
     #save_image(images[0][0], "test.png")
     #print(labels[0])
+
+
     
 
