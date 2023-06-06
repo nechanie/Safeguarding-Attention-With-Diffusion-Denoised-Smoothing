@@ -7,4 +7,5 @@
 #SBATCH -c 16
 #SBATCH -t 1-00:00:00       
 #SBATCH --export=ALL
-python3 train.py --data_folder datasets/cifar10png/ --num_classes=10 --gpus 1 $1
+# python3 train.py --data_folder datasets/cifar10png/ --num_classes=10 --img_size=224 --gpus 1 $1
+python3 train.py --data_folder datasets/cifar100png/ --num_classes=100 --img_size=224 --gpus 1 $1
