@@ -1,15 +1,28 @@
-from urllib.request import urlopen
+import os
 from PIL import Image
 import timm
 import torch
+from urllib.request import urlopen
+
+LOCAL_MODEL_PATH = "./pretrained_coatnet.pt"
+local_model_exists = os.path.exists(LOCAL_MODEL_PATH)
 
 img = Image.open(urlopen(
     'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'
 ))
 
-print("Got image", flush=True)
+print("Downloaded test image", flush=True)
 
-model = timm.create_model('coatnet_rmlp_2_rw_384.sw_in12k_ft_in1k', pretrained=True)
+
+model = None
+if local_model_exists:
+    print("Using local model", flush=True)
+    model = torch.load("pretrained_coatnet.pt")
+else:
+    print("Fetching remote model", flush=True)
+    model = timm.create_model('coatnet_rmlp_2_rw_384.sw_in12k_ft_in1k', pretrained=True)
+    torch.save(model, LOCAL_MODEL_PATH)
+
 model = model.eval()
 
 # get model specific transforms (normalization, resize)
