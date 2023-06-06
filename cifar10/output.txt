@@ -1,0 +1,5 @@
+Standalone Model Accuracy     Diffusion Denoised Model Accuracy       Noise Sigma
+          83.79                           83.68                          0.0         
+          83.79                           49.52                          0.25        
+          83.79                            33.3                          0.5         
+          83.79                           22.29                          1.0         
