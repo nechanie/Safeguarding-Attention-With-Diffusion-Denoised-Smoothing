@@ -14,17 +14,19 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 
 def get_subset_random_sampler(dataset, dataset_size):
+    random_seed = 42    # We always get the same subset and randomization unless you change this seed.
+    np.random.seed(random_seed)
+    torch.manual_seed(random_seed)
+
+    print("Indices size:", len(dataset))
+
     indices = list(range(len(dataset)))    
-
-    # random_seed = 42    # We always get the same subset unless you change this seed.
-    # random_seed = np.random.seed(random_seed)
-    # np.random.shuffle(indices)
-    
+    np.random.shuffle(indices)
     subset_len = int(len(dataset) * dataset_size)
-    # subset = torch.utils.data.Subset(dataset, indices[:subset_len])
-    # sampler = torch.utils.data.SequentialSampler(subset)
+    # print(indices[:subset_len])
 
-    sampler = SubsetRandomSampler(indices[:subset_len])   # Use this to randomize the random subset
+    # Use this to randomize the random subset (needed for accurate training)
+    sampler = SubsetRandomSampler(indices[:subset_len])
 
     return sampler
 
@@ -67,7 +69,7 @@ class LoadDataset(Dataset):
 
         for x in glob.glob(folder_path + "**", recursive=True):
 
-            if not x.endswith('jpg'):
+            if not x.endswith('jpg') and not x.endswith('png'):
                 continue
 
             class_idx = self.classes.index(x.split('/')[-2])
@@ -132,7 +134,7 @@ class LoadInputImages(Dataset):
         image_paths = []
         for x in glob.glob(self.input_folder + '**'):
 
-            if not x.endswith('jpg'):
+            if not x.endswith('jpg') and not x.endswith('png'):
                 continue
             image_paths.append(x)
 
