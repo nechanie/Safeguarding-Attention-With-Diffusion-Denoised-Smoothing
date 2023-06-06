@@ -27,7 +27,7 @@ DIR_PATH = f'runs/{FORMATTED_DATETIME}/'
 
 os.mkdir(DIR_PATH)
 
-DATASET_SIZE = 0.05
+DATASET_SIZE = 1.0
 
 # device = torch.device("cuda:0" if torch.cuda.is_available() and args.device == 'gpu' else 'cpu')
 
@@ -97,13 +97,13 @@ def train(gpu, args):
         + f"Dataset: {args.data_folder}\n" \
         + f"Dataset Size: {DATASET_SIZE}\n" \
         + f"Num Classes: {num_classes}\n" \
+        + f"Image Size: {args.img_size}\n" \
         + f"Cbam?: {args.use_cbam}\n",
         flush=True
     )
 
-    summary(model, (3, 224, 224))
+    summary(model, (3, args.img_size, args.img_size))
     # model = nn.parallel.DistributedDataParallel(model, device_ids=[gpu])
-
 
     start_time = time.time()
 
