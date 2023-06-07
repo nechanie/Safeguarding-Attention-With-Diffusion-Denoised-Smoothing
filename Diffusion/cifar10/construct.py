@@ -1,12 +1,15 @@
-import os 
 import argparse
-import time 
 import datetime 
+import os 
+import time 
 from torchvision import transforms, datasets
 from tqdm import tqdm
 import torch
 from torch.utils.data import DataLoader
 from DRM import DiffusionRobustModel
+
+from load_dataset import LoadDataset, get_subset_random_sampler
+# from runtime_args import args
 
 
 CIFAR10_DATA_DIR = "data/cifar10"
@@ -15,7 +18,16 @@ def main(args):
     filename = f"cifar10/{args.ptfile}"
     model = DiffusionRobustModel(filename)
     standalone_model = torch.load(filename)
-    dataset = datasets.CIFAR10(CIFAR10_DATA_DIR, train=False, download=True, transform=transforms.ToTensor())
+    
+    DATASET_SIZE = 0.1
+    IMG_SIZE = 224
+
+    test_dataset = LoadDataset(dataset_folder_path=args.data_folder, image_size=IMG_SIZE, image_depth=3, train=False,
+                            transform=transforms.ToTensor(), validate=True)
+    test_subset_sampler = get_subset_random_sampler(test_dataset, DATASET_SIZE)
+    loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=1,
+                                    pin_memory=True, sampler=test_subset_sampler)
+
     # Get the timestep t corresponding to noise level sigma
     target_sigma = args.sigma * 2
     real_sigma = 0
@@ -27,21 +39,21 @@ def main(args):
         real_sigma = b / a
 
     # Define the smoothed classifier 
-    loader = DataLoader(dataset, args.batch_size, shuffle=False)
     total = 0
     correct = 0
     standalone_correct = 0
     with torch.no_grad():
-        progress_bar = tqdm(loader, "DDS", len(loader))
-        for x, y in progress_bar:
-            x, y = x.cuda(), y.cuda()
+        for i, sample in tqdm(enumerate(loader), total=len(loader)):
+            x, y = sample['image'].cuda(non_blocking=True), sample['label'].cuda(non_blocking=True)
+
             output = model(x, t)
             _, predicted = torch.max(output.data, 1)
             total += y.size(0)
             correct += (predicted == y).sum().item()
-        progress_bar_standalone = tqdm(loader, "Standalone", len(loader))
-        for x, y in progress_bar_standalone:
-            x, y = x.cuda(), y.cuda()
+
+        # Standalone testing:
+        for i, sample in tqdm(enumerate(loader), total=len(loader)):
+            x, y = sample['image'].cuda(non_blocking=True), sample['label'].cuda(non_blocking=True)
             imgs = torch.nn.functional.interpolate(x, (224, 224), mode='bilinear', antialias=False)
             _, standalone_output = standalone_model(imgs)
             _, standalone_predicted = torch.max(standalone_output.data, 1)
@@ -59,6 +71,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=200, help="batch size")
     parser.add_argument("--outfile", type=str, help="output file")
     parser.add_argument("--ptfile", type=str, help="pre-trained classifier file")
+    parser.add_argument('--data_folder', type=str, help='Specify the path to the folder where the data is.', required=True)
     args = parser.parse_args()
 
     main(args)
