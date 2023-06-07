@@ -102,9 +102,7 @@ def save_all_adversarial_images(dirname, images, labels):
     for idx in tqdm(range(args.PGD_image_count)):
         label = labels[idx]
         new_label = class_map[str(label.item())][0]
-        # filename = dirname + "/" + str(label.item()) + "/" + str(counts[label.item()]) + ".png"
         filename = dirname + "/" + new_label + "/" + str(counts[label.item()]) + ".png"
-        # filename = dirname + "/" + str(label) + "/" + str(counts[label]) + ".png"
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         save_image(images[idx], filename)
         counts[label] = counts[label] + 1
