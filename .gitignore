@@ -169,3 +169,5 @@ cifar10_uncond_50M_500K.pt
 pretrained*.pt
 val_images/
 old_slurm/
+
+256x256_diffusion_uncond.pt
