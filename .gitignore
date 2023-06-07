@@ -164,3 +164,4 @@ ResNet-50-CBAM-PyTorch/datasets/
 datasets/
 
 pretrained*.pt
+val_images/

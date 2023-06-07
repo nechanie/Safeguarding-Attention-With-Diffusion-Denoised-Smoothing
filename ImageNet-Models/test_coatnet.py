@@ -7,9 +7,8 @@ from urllib.request import urlopen
 LOCAL_MODEL_PATH = "./pretrained_coatnet.pt"
 local_model_exists = os.path.exists(LOCAL_MODEL_PATH)
 
-img = Image.open(urlopen(
-    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'
-))
+img = Image.open('/nfs/stak/users/morgamat/hpc-share/CS_499/CS_499_Term_Project/ImageNet-Models/tempo/ILSVRC2012_val_00000004.JPEG')
+img = img.convert('RGB')
 
 print("Downloaded test image", flush=True)
 
@@ -31,7 +30,9 @@ transforms = timm.data.create_transform(**data_config, is_training=False)
 
 print("Running prediction:", flush=True)
 
-output = model(transforms(img).unsqueeze(0))  # unsqueeze single image into batch of 1
+input_data = transforms(img).unsqueeze(0)
+print("Shape:", input_data.shape)
+output = model(input_data)  # unsqueeze single image into batch of 1
 
 top5_probabilities, top5_class_indices = torch.topk(output.softmax(dim=1) * 100, k=5)
 print(top5_probabilities)
