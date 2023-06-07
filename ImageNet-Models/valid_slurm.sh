@@ -7,4 +7,4 @@
 #SBATCH -c 16
 #SBATCH -t 1-00:00:00       
 #SBATCH --export=ALL
-python3 valid.py --data_folder=/nfs/stak/users/morgamat/hpc-share/CS_499/CS_499_Term_Project/ImageNet-Models/val/
+python3 valid.py --data_folder=/nfs/stak/users/morgamat/hpc-share/CS_499/CS_499_Term_Project/ImageNet-Models/val_images/
