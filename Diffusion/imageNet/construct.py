@@ -2,6 +2,7 @@ import argparse
 import datetime 
 import os 
 import time 
+import timm
 from torchvision import transforms, datasets
 from tqdm import tqdm
 import torch
@@ -11,19 +12,25 @@ from DRM import DiffusionRobustModel
 from load_dataset import LoadDataset, get_subset_random_sampler
 # from runtime_args import args
 
+# # Device will determine whether to run the training on GPU or CPU.
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-CIFAR10_DATA_DIR = "data/cifar10"
 
 def main(args):
-    filename = f"cifar10/{args.ptfile}"
+    filename = f"imageNet/{args.ptfile}"
+    print(filename)
     model = DiffusionRobustModel(filename)
     standalone_model = torch.load(filename)
     
-    DATASET_SIZE = 0.1
+    DATASET_SIZE = 0.005
     IMG_SIZE = 224
+    
+    # get model specific transforms (normalization, resize)
+    data_config = timm.data.resolve_model_data_config(model)
+    transforms = timm.data.create_transform(**data_config, is_training=False)
 
     test_dataset = LoadDataset(dataset_folder_path=args.data_folder, image_size=IMG_SIZE, image_depth=3, train=False,
-                            transform=transforms.ToTensor(), validate=True)
+                            transform=transforms, validate=True)
     test_subset_sampler = get_subset_random_sampler(test_dataset, DATASET_SIZE)
     loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=1,
                                     pin_memory=True, sampler=test_subset_sampler)
@@ -54,7 +61,10 @@ def main(args):
         # Standalone testing:
         for i, sample in tqdm(enumerate(loader), total=len(loader)):
             x, y = sample['image'].cuda(non_blocking=True), sample['label'].cuda(non_blocking=True)
-            imgs = torch.nn.functional.interpolate(x, (224, 224), mode='bilinear', antialias=False)
+
+            # imgs = torch.nn.functional.interpolate(imgs, (384, 384), mode='bilinear', antialias=True)
+            # TODO: ensure model and imgs are both on GPU
+
             _, standalone_output = standalone_model(imgs)
             _, standalone_predicted = torch.max(standalone_output.data, 1)
             standalone_correct += (standalone_predicted == y).sum().item()
