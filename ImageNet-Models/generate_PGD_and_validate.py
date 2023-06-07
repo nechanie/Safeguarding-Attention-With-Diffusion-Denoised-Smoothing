@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     test_generator = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers,
                                     pin_memory=True, sampler=sampler)
-
+    
     
     model = torch.load(path_to_model, map_location=device)
     model.eval()
@@ -68,5 +68,6 @@ if __name__ == "__main__":
     print("\n== Saving Images to drive\n")
     save_all_adversarial_images(f"{args.PGD_save_path}/e_{args.PGD_epsilon}_n_{args.PGD_niter}_s_{args.PGD_stepsize/255}", advImages, labels)
 
+    print("done!")
 
     #validate(model, advImages)

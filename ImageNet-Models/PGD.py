@@ -1,3 +1,4 @@
+import json
 import time
 import torch
 import torch.nn as nn
@@ -84,10 +85,26 @@ def show(imgs):
 
 
 def save_all_adversarial_images(dirname, images, labels):
+
+
+    class_map = json.load(open('imagenet_class_index.json', 'r'))
+
+    for idx in class_map.keys():
+        id_name = class_map[str(idx)][0]
+
+        new_folder = dirname + "/" + id_name
+        if not os.path.exists(new_folder):
+            os.makedirs(new_folder)
+
+    print("Writing adversarial images to files", flush=True)
+
     counts = [0 for _ in range(1000)]
     for idx in tqdm(range(args.PGD_image_count)):
         label = labels[idx]
-        filename = dirname + "/" + str(label.item()) + "/" + str(counts[label.item()]) + ".png"
+        new_label = class_map[str(label.item())][0]
+        # filename = dirname + "/" + str(label.item()) + "/" + str(counts[label.item()]) + ".png"
+        filename = dirname + "/" + new_label + "/" + str(counts[label.item()]) + ".png"
+        # filename = dirname + "/" + str(label) + "/" + str(counts[label]) + ".png"
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         save_image(images[idx], filename)
         counts[label] = counts[label] + 1
