@@ -19,15 +19,16 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 def main(args):
     filename = f"imageNet/{args.ptfile}"
     print(filename)
+    print("Dataset folder:", args.data_folder)
     model = DiffusionRobustModel(filename)
     standalone_model = torch.load(filename)
     standalone_model = standalone_model.to(device)
     
-    DATASET_SIZE = 0.005
+    DATASET_SIZE = 1.0
     IMG_SIZE = 224
     
     # get model specific transforms (normalization, resize)
-    data_config = timm.data.resolve_model_data_config(model)
+    data_config = timm.data.resolve_model_data_config(standalone_model)
     transforms = timm.data.create_transform(**data_config, is_training=False)
 
     test_dataset = LoadDataset(dataset_folder_path=args.data_folder, image_size=IMG_SIZE, image_depth=3, train=False,
@@ -68,12 +69,10 @@ def main(args):
             standalone_output = standalone_model(imgs)
             _, standalone_predicted = torch.max(standalone_output.data, 1)
             standalone_correct += (standalone_predicted == y).sum().item()
-    if os.path.isfile(args.outfile):
-        f = open(args.outfile, "a")
-    else:
-        f = open(args.outfile, "w")    
-        print(f"{'Standalone Model Accuracy':<30}{'Diffusion Denoised Model Accuracy':<40}{'Noise Sigma'}", file=f, flush=True)
-    print(f"{100*standalone_correct/total:^25}{100*correct/total:^40}{args.sigma:^20}", file=f, flush=True)
+
+    print()
+    print(f"{'Standalone Model Accuracy':<30}{'Diffusion Denoised Model Accuracy':<40}{'Noise Sigma'}", flush=True)
+    print(f"{100*standalone_correct/total:^25}{100*correct/total:^40}{args.sigma:^20}", flush=True)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Predict on many examples')
