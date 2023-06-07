@@ -13,7 +13,7 @@ from load_dataset import LoadDataset, get_subset_random_sampler
 # from runtime_args import args
 
 # # Device will determine whether to run the training on GPU or CPU.
-# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def main(args):
@@ -21,6 +21,7 @@ def main(args):
     print(filename)
     model = DiffusionRobustModel(filename)
     standalone_model = torch.load(filename)
+    standalone_model = standalone_model.to(device)
     
     DATASET_SIZE = 0.005
     IMG_SIZE = 224
@@ -62,10 +63,9 @@ def main(args):
         for i, sample in tqdm(enumerate(loader), total=len(loader)):
             x, y = sample['image'].cuda(non_blocking=True), sample['label'].cuda(non_blocking=True)
 
-            # imgs = torch.nn.functional.interpolate(imgs, (384, 384), mode='bilinear', antialias=True)
-            # TODO: ensure model and imgs are both on GPU
+            imgs = torch.nn.functional.interpolate(x, (384, 384), mode='bilinear', antialias=True)
 
-            _, standalone_output = standalone_model(imgs)
+            standalone_output = standalone_model(imgs)
             _, standalone_predicted = torch.max(standalone_output.data, 1)
             standalone_correct += (standalone_predicted == y).sum().item()
     if os.path.isfile(args.outfile):
