@@ -166,3 +166,6 @@ datasets/
 .vscode/
 data
 cifar10_uncond_50M_500K.pt
+pretrained*.pt
+val_images/
+old_slurm/
