@@ -35,7 +35,7 @@ class LoadDataset(Dataset):
     '''Loads the dataset from the given path.
     '''
 
-    def __init__(self, dataset_folder_path, image_size=224, image_depth=3, train=True, transform=None):
+    def __init__(self, dataset_folder_path, image_size=224, image_depth=3, train=True, transform=None, validate=False):
         '''Parameter Init.
         '''
 
@@ -46,6 +46,7 @@ class LoadDataset(Dataset):
         self.image_size = image_size
         self.image_depth = image_depth
         self.train = train
+        self.validate = validate
         self.classes = sorted(self.get_classnames())
         self.image_path_label = self.read_folder()
 
@@ -53,6 +54,9 @@ class LoadDataset(Dataset):
     def get_classnames(self):
         '''Returns the name of the classes in the dataset.
         '''
+        if self.validate:
+            return os.listdir(f"{self.dataset_folder_path.rstrip('/')}/" )
+        
         return os.listdir(f"{self.dataset_folder_path.rstrip('/')}/train/" )
 
 
@@ -62,7 +66,9 @@ class LoadDataset(Dataset):
 
         image_path_label = []
 
-        if self.train:
+        if self.validate:
+            folder_path = f"{self.dataset_folder_path.rstrip('/')}/"
+        elif self.train:
             folder_path = f"{self.dataset_folder_path.rstrip('/')}/train/"
         else:
             folder_path = f"{self.dataset_folder_path.rstrip('/')}/test/"

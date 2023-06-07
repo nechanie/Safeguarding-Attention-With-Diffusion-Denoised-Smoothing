@@ -129,7 +129,7 @@ def train(gpu, args):
 
             optimizer.zero_grad()
 
-            _,net_output = model(batch_x)
+            _, net_output = model(batch_x)
             total_loss = criterion(input=net_output, target=batch_y)
 
             total_loss.backward()
