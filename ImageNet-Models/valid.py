@@ -44,10 +44,12 @@ def validate(model, data_loader) -> float:
 
 def main():
     # path_to_model = '/nfs/stak/users/morgamat/hpc-share/CS_499/CS_499_Term_Project/ResNet-50-CBAM-PyTorch/pretrained_weights/cifar_10_dataset_clean_models/resnet_cbam/resnet_cbam/20_epoch_model.pt'
-    path_to_model = '/nfs/stak/users/morgamat/hpc-share/CS_499/CS_499_Term_Project/ImageNet-Models/pretrained_coatnet.pt'
+    path_to_model = '/nfs/stak/users/morgamat/hpc-share/CS_499/CS_499_Term_Project/Diffusion/imageNet/pretrained_coatnet.pt'
     assert path_to_model[-3:] == '.pt'
 
-    DATASET_SIZE = 0.02
+    print("Dataset folder:", args.data_folder)
+
+    DATASET_SIZE = 1.0
     IMG_SIZE = 224
     
     model = torch.load(path_to_model)
@@ -68,10 +70,28 @@ def main():
     
     # train_generator = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False,
     #                                 num_workers=args.num_workers, pin_memory=True, sampler=train_subset_sampler)
-    test_generator = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers,
+    loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers,
                                     pin_memory=True, sampler=test_subset_sampler)
 
-    validate(model, test_generator)
+    # validate(model, test_generator)
+
+    total = 0
+    correct = 0
+    standalone_correct = 0
+    with torch.no_grad():
+
+        # Standalone testing:
+        for i, sample in tqdm(enumerate(loader), total=len(loader)):
+            x, y = sample['image'].cuda(non_blocking=True), sample['label'].cuda(non_blocking=True)
+            total += y.size(0)
+            imgs = torch.nn.functional.interpolate(x, (384, 384), mode='bilinear', antialias=True)
+
+            standalone_output = model(imgs)
+            _, standalone_predicted = torch.max(standalone_output.data, 1)
+            standalone_correct += (standalone_predicted == y).sum().item()
+
+    print(f"{'Standalone Model Accuracy':<30}", flush=True)
+    print(f"{100*standalone_correct/total:^25}", flush=True)
 
 
 if __name__ == '__main__':

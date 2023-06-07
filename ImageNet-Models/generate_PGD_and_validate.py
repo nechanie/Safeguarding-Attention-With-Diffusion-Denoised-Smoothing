@@ -13,6 +13,11 @@ import load_dataset as DatasetLoader
 from runtime_args import args
 from PGD import generate_adversarial_images, save_all_adversarial_images
 
+    
+def save_unnormalized_img(img, filename, data_config):
+    inverse_transform = transforms.Normalize(mean=[-m/s for m, s in zip(data_config['mean'], data_config['std'])], std=[1/s for s in data_config['std']])
+    inversed_image = inverse_transform(img)
+    save_image(inversed_image, filename)
 
 
 device = torch.device("cuda" if torch.cuda.is_available() and args.device == 'gpu' else 'cpu')
@@ -22,8 +27,6 @@ local_model_exists = os.path.exists(LOCAL_MODEL_PATH)
 
 if __name__ == "__main__":
     print(f"PyTorch device: {device}")
-
-    print("Downloaded test image", flush=True)
 
 
     model = None
@@ -43,30 +46,30 @@ if __name__ == "__main__":
 
 
     DATASET_SIZE = 0.02
-    
 
     # get model specific transforms (normalization, resize)
     data_config = timm.data.resolve_model_data_config(model)
-    transforms = timm.data.create_transform(**data_config, is_training=False)
+    transform = timm.data.create_transform(**data_config, is_training=False)
 
     # Dataset Creation
     dataset = DatasetLoader.LoadDataset(dataset_folder_path=args.data_folder, image_depth=args.img_depth,
-                                transform=transforms, validate=True)
+                                transform=transform, validate=True)
 
     sampler = DatasetLoader.get_subset_random_sampler(dataset, DATASET_SIZE)
 
     test_generator = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers,
                                     pin_memory=True, sampler=sampler)
-
     
+
     model = torch.load(path_to_model, map_location=device)
     model.eval()
     
-
     print(f"\n== Generating Adversarial Images with epsilon {args.PGD_epsilon}\n")
     clean, advImages, labels = generate_adversarial_images(args.PGD_image_count, model, test_generator, args.PGD_niter, args.PGD_epsilon, args.PGD_stepsize/255)
+    
     print("\n== Saving Images to drive\n")
     save_all_adversarial_images(f"{args.PGD_save_path}/e_{args.PGD_epsilon}_n_{args.PGD_niter}_s_{args.PGD_stepsize/255}", advImages, labels)
 
+    print("done!")
 
     #validate(model, advImages)
