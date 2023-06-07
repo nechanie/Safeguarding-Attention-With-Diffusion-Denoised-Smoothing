@@ -24,11 +24,11 @@ parser.add_argument('--img_depth', type=int, help='Specify the depth of the inpu
 parser.add_argument('--device', type=str, help='Specify which device to be used for the evaluation. Either "cpu" or "gpu".', default='gpu')
 parser.add_argument('--pretrained_path', type=str, help='Specify the path to a trained PyTorch model.')
 
-parser.add_argument('--PGD_image_count', type=int, default=10)
-parser.add_argument('--PGD_niter', type=int, default=100)
-parser.add_argument('--PGD_epsilon', type=float, default= 1e-3)
-parser.add_argument('--PGD_stepsize', type=float, default= 1e-3)
+parser.add_argument('--PGD_image_count', type=int, help='Specify how many adversarial images should be generated', default=10)
+parser.add_argument('--PGD_niter', type=int, default=5)
+parser.add_argument('--PGD_epsilon', type=float, default= .03)
+parser.add_argument('--PGD_stepsize', type=float, default= 2)
 parser.add_argument('--DEBUG', type=bool, default=False)
-parser.add_argument('--PGD_save_path', type=str, default='adv_images')
+parser.add_argument('--PGD_save_path', type=str, help='path to save resulting images to as png\'s', default='adv_images')
 
 args = parser.parse_args()
