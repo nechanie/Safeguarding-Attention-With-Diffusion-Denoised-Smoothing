@@ -20,9 +20,14 @@ def main(args):
     filename = f"imageNet/{args.ptfile}"
     print(filename)
     print("Dataset folder:", args.data_folder)
-    model = DiffusionRobustModel(filename)
+    sample_output_imgs_folder = "samples_" + args.data_folder.split("/")[-1]
+    print("Saving image smaples to:", sample_output_imgs_folder)
+    if not os.path.exists(sample_output_imgs_folder) : os.mkdir(sample_output_imgs_folder)
+
+    model = DiffusionRobustModel(filename, sample_output_imgs_folder)
     standalone_model = torch.load(filename)
     standalone_model = standalone_model.to(device)
+
     
     DATASET_SIZE = 1.0
     IMG_SIZE = 224
@@ -30,11 +35,12 @@ def main(args):
     # get model specific transforms (normalization, resize)
     data_config = timm.data.resolve_model_data_config(standalone_model)
     transforms = timm.data.create_transform(**data_config, is_training=False)
+    model.data_config = data_config
 
     test_dataset = LoadDataset(dataset_folder_path=args.data_folder, image_size=IMG_SIZE, image_depth=3, train=False,
                             transform=transforms, validate=True)
     test_subset_sampler = get_subset_random_sampler(test_dataset, DATASET_SIZE)
-    loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=1,
+    loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=1,
                                     pin_memory=True, sampler=test_subset_sampler)
 
     # Get the timestep t corresponding to noise level sigma

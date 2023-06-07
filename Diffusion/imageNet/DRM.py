@@ -1,7 +1,16 @@
 import torch
 import torch.nn as nn
+from torchvision import transforms
+from torchvision.utils import save_image
 import os 
 import timm
+    
+
+def save_unnormalized_img(img, filename, data_config):
+    inverse_transform = transforms.Normalize(mean=[-m/s for m, s in zip(data_config['mean'], data_config['std'])], std=[1/s for s in data_config['std']])
+    inversed_image = inverse_transform(img)
+    save_image(inversed_image, filename)
+
 
 from guided_diffusion.script_util import (
     NUM_CLASSES,
@@ -45,7 +54,7 @@ class Args:
 
 
 class DiffusionRobustModel(nn.Module):
-    def __init__(self, ptfile):
+    def __init__(self, ptfile, sample_output_imgs_folder):
         super().__init__()
         model, diffusion = create_model_and_diffusion(
             **args_to_dict(Args(), model_and_diffusion_defaults().keys())
@@ -73,8 +82,26 @@ class DiffusionRobustModel(nn.Module):
         self.model = torch.nn.DataParallel(self.model).cuda()
         self.classifier = torch.nn.DataParallel(self.classifier).cuda()
 
+        self.data_config = None
+        self.image_num = 0
+        self.sample_output_imgs_folder = sample_output_imgs_folder
+
     def forward(self, x, t):
+        if self.image_num < 15:
+            for idx, img in enumerate(x):
+                filename = self.sample_output_imgs_folder + f"/original_image_{self.image_num}.png"
+                save_unnormalized_img(img, filename, self.data_config)
+                break
+
         imgs = self.denoise(x, t)
+
+        if self.image_num < 15:
+            for idx, img in enumerate(imgs):
+                filename = self.sample_output_imgs_folder + f"/denoised_image_{self.image_num}.png"
+                save_unnormalized_img(img, filename, self.data_config)
+                break
+
+            self.image_num += 1
 
         imgs = torch.nn.functional.interpolate(imgs, (384, 384), mode='bilinear', antialias=True)
         imgs = imgs.cuda()
