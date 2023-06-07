@@ -51,7 +51,7 @@ class DiffusionRobustModel(nn.Module):
             **args_to_dict(Args(), model_and_diffusion_defaults().keys())
         )
         model.load_state_dict(
-            torch.load("imagenet/256x256_diffusion_uncond.pt")
+            torch.load("imageNet/256x256_diffusion_uncond.pt")
         )
         model.eval().cuda()
 
@@ -76,9 +76,8 @@ class DiffusionRobustModel(nn.Module):
     def forward(self, x, t):
         imgs = self.denoise(x, t)
 
-        imgs = torch.nn.functional.interpolate(imgs, (512, 512), mode='bicubic', antialias=True)
-
-        imgs = torch.tensor(imgs).cuda()
+        imgs = torch.nn.functional.interpolate(imgs, (384, 384), mode='bilinear', antialias=True)
+        imgs = imgs.cuda()
         with torch.no_grad():
             out = self.classifier(imgs)
 

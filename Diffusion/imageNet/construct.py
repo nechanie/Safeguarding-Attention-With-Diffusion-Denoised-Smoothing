@@ -1,29 +1,40 @@
-import os 
 import argparse
-import time 
 import datetime 
+import os 
+import time 
+import timm
 from torchvision import transforms, datasets
-from DRM import DiffusionRobustModel
 from tqdm import tqdm
 import torch
-from timm.data import create_transform
-import timm
 from torch.utils.data import DataLoader
 from DRM import DiffusionRobustModel
-from datasets import load_dataset
+
+from load_dataset import LoadDataset, get_subset_random_sampler
+# from runtime_args import args
+
+# # Device will determine whether to run the training on GPU or CPU.
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 def main(args):
-    filename = f"imagenet/{args.ptfile}"
+    filename = f"imageNet/{args.ptfile}"
+    print(filename)
     model = DiffusionRobustModel(filename)
     standalone_model = torch.load(filename)
+    
+    DATASET_SIZE = 0.005
+    IMG_SIZE = 224
+    
     # get model specific transforms (normalization, resize)
-    data_config = timm.data.resolve_model_data_config(model.classifier)
-    transform = create_transform(**data_config, is_training=False)
-    # If the dataset is gated/private, make sure you have run huggingface-cli login
-    dataset = load_dataset("imagenet-1k", split="val", use_auth_token=True)
-    dataset.set_transform(transform)
-    
-    
+    data_config = timm.data.resolve_model_data_config(model)
+    transforms = timm.data.create_transform(**data_config, is_training=False)
+
+    test_dataset = LoadDataset(dataset_folder_path=args.data_folder, image_size=IMG_SIZE, image_depth=3, train=False,
+                            transform=transforms, validate=True)
+    test_subset_sampler = get_subset_random_sampler(test_dataset, DATASET_SIZE)
+    loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=1,
+                                    pin_memory=True, sampler=test_subset_sampler)
+
     # Get the timestep t corresponding to noise level sigma
     target_sigma = args.sigma * 2
     real_sigma = 0
@@ -34,23 +45,27 @@ def main(args):
         b = model.diffusion.sqrt_one_minus_alphas_cumprod[t]
         real_sigma = b / a
 
-    loader = DataLoader(dataset, args.batch_size, shuffle=False)
+    # Define the smoothed classifier 
     total = 0
     correct = 0
     standalone_correct = 0
     with torch.no_grad():
-        progress_bar = tqdm(loader, "DDS", len(loader))
-        for x, y in progress_bar:
-            x, y = x.cuda(), y.cuda()
+        for i, sample in tqdm(enumerate(loader), total=len(loader)):
+            x, y = sample['image'].cuda(non_blocking=True), sample['label'].cuda(non_blocking=True)
+
             output = model(x, t)
             _, predicted = torch.max(output.data, 1)
             total += y.size(0)
             correct += (predicted == y).sum().item()
-        progress_bar_standalone = tqdm(loader, "Standalone", len(loader))
-        for x, y in progress_bar_standalone:
-            x, y = x.cuda(), y.cuda()
-            imgs = torch.nn.functional.interpolate(imgs, (512, 512), mode='bicubic', antialias=True)
-            standalone_output = standalone_model(imgs)
+
+        # Standalone testing:
+        for i, sample in tqdm(enumerate(loader), total=len(loader)):
+            x, y = sample['image'].cuda(non_blocking=True), sample['label'].cuda(non_blocking=True)
+
+            # imgs = torch.nn.functional.interpolate(imgs, (384, 384), mode='bilinear', antialias=True)
+            # TODO: ensure model and imgs are both on GPU
+
+            _, standalone_output = standalone_model(imgs)
             _, standalone_predicted = torch.max(standalone_output.data, 1)
             standalone_correct += (standalone_predicted == y).sum().item()
     if os.path.isfile(args.outfile):
@@ -66,6 +81,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=200, help="batch size")
     parser.add_argument("--outfile", type=str, help="output file")
     parser.add_argument("--ptfile", type=str, help="pre-trained classifier file")
+    parser.add_argument('--data_folder', type=str, help='Specify the path to the folder where the data is.', required=True)
     args = parser.parse_args()
 
     main(args)
