@@ -165,3 +165,4 @@ datasets/
 
 pretrained*.pt
 val_images/
+old_slurm/
