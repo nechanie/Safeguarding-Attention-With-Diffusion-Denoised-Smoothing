@@ -1,3 +1,4 @@
+import json
 import torch
 import torch.nn as nn
 from torchvision import transforms
@@ -26,7 +27,7 @@ local_model_exists = os.path.exists(LOCAL_MODEL_PATH)
 
 
 if __name__ == "__main__":
-    print(f"PyTorch device: {device}")
+    print(f"PyTorch device: {device}", flush=True)
 
 
     model = None
@@ -42,7 +43,7 @@ if __name__ == "__main__":
     path_to_model = args.pretrained_path or LOCAL_MODEL_PATH
     assert path_to_model[-3:] == '.pt'
 
-    print(path_to_model)
+    print(path_to_model, flush=True)
 
 
     DATASET_SIZE = 0.02
@@ -61,14 +62,25 @@ if __name__ == "__main__":
                                     pin_memory=True, sampler=sampler)
     
 
-    model = torch.load(path_to_model, map_location=device)
+    model = model.to(device)
     model.eval()
+
+    class_map = json.load(open('imagenet_class_index.json', 'r'))
+    save_path = f"{args.PGD_save_path}/e_{args.PGD_epsilon}_n_{args.PGD_niter}_s_{args.PGD_stepsize/255}"
+
+    print("Writing folders to", save_path, flush=True)
+    for idx in class_map.keys():
+        id_name = class_map[str(idx)][0]
+
+        new_folder = save_path + "/" + id_name
+        if not os.path.exists(new_folder):
+            os.makedirs(new_folder)
     
     print(f"\n== Generating Adversarial Images with epsilon {args.PGD_epsilon}\n")
-    clean, advImages, labels = generate_adversarial_images(args.PGD_image_count, model, test_generator, args.PGD_niter, args.PGD_epsilon, args.PGD_stepsize/255)
+    generate_adversarial_images(args.PGD_image_count, model, test_generator, args.PGD_niter, args.PGD_epsilon, args.PGD_stepsize/255, save_path)
     
-    print("\n== Saving Images to drive\n")
-    save_all_adversarial_images(f"{args.PGD_save_path}/e_{args.PGD_epsilon}_n_{args.PGD_niter}_s_{args.PGD_stepsize/255}", advImages, labels)
+    # print("\n== Saving Images to drive\n")
+    # save_all_adversarial_images(f"{args.PGD_save_path}/e_{args.PGD_epsilon}_n_{args.PGD_niter}_s_{args.PGD_stepsize/255}", advImages, labels)
 
     print("done!")
 
