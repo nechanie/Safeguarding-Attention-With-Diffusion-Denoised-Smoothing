@@ -27,7 +27,7 @@ def clean_test(clean_dataset_path, standalone_model, args, sample_output_imgs_fo
     test_subset_sampler = get_subset_random_sampler(test_dataset, 0.02)
     loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=1,
                                     pin_memory=True, sampler=test_subset_sampler)
-
+    
     print("Testing standalone on clean data", flush=True)
     image_num = 0
     # Standalone testing on clean data:
@@ -46,7 +46,7 @@ def clean_test(clean_dataset_path, standalone_model, args, sample_output_imgs_fo
 
             if image_num < 15:
                 for idx, img in enumerate(x):
-                    filename = sample_output_imgs_folder + f"/pgd_image_{image_num}.png"
+                    filename = sample_output_imgs_folder + f"/clean_image_{image_num}.png"
                     save_unnormalized_img(img, filename, data_config)
                     break
                 image_num += 1
@@ -58,7 +58,7 @@ def main(args):
     filename = f"imageNet/{args.ptfile}"
     print(filename)
     print("Dataset folder:", args.data_folder)
-    sample_output_imgs_folder = "samples_" + args.data_folder.split("/")[-1]
+    sample_output_imgs_folder = f"samples_sigma_{args.sigma}_" + args.data_folder.split("/")[-1]
     print("Saving image smaples to:", sample_output_imgs_folder)
     if not os.path.exists(sample_output_imgs_folder) : os.mkdir(sample_output_imgs_folder)
 
