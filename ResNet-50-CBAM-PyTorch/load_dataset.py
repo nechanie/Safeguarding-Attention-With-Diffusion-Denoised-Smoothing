@@ -13,7 +13,7 @@ from torch.utils.data import Dataset, dataset
 from torch.utils.data.sampler import SubsetRandomSampler
 
 
-def get_subset_random_sampler(dataset, dataset_size):
+def get_subset_random_sampler(dataset, dataset_len):
     random_seed = 42    # We always get the same subset and randomization unless you change this seed.
     np.random.seed(random_seed)
     torch.manual_seed(random_seed)
@@ -22,7 +22,8 @@ def get_subset_random_sampler(dataset, dataset_size):
 
     indices = list(range(len(dataset)))    
     np.random.shuffle(indices)
-    subset_len = int(len(dataset) * dataset_size)
+    subset_len = int(dataset_len)
+    # subset_len = int(len(dataset) * dataset_size)
     # print(indices[:subset_len])
 
     # Use this to randomize the random subset (needed for accurate training)

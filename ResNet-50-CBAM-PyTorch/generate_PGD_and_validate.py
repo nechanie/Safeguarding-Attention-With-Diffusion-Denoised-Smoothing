@@ -34,13 +34,13 @@ if __name__ == "__main__":
 
     print(path_to_model, flush=True)
 
-    DATASET_SIZE = 0.2
-
+    DATASET_LEN = args.PGD_image_count
+    
     # Dataset Creation
     dataset = DatasetLoader.LoadDataset(dataset_folder_path=args.data_folder, image_depth=args.img_depth,
                                 transform=transforms.ToTensor(), train=False, validate=False)
 
-    sampler = DatasetLoader.get_subset_random_sampler(dataset, DATASET_SIZE)
+    sampler = DatasetLoader.get_subset_random_sampler(dataset, DATASET_LEN)
 
     test_generator = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers,
                                     pin_memory=True, sampler=sampler)
