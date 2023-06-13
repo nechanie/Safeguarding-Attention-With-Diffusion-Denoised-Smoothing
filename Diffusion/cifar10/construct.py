@@ -22,7 +22,7 @@ def clean_test(clean_dataset_path, standalone_model, args, sample_output_imgs_fo
     loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=1,
                                     pin_memory=True, sampler=test_subset_sampler)
 
-    print("Testing standalone on clean data", flush=True)
+    # print("Testing standalone on clean data", flush=True)
     image_num = 0
     # Standalone testing on clean data:
     total = 0

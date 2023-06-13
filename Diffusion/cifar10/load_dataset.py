@@ -19,14 +19,14 @@ def get_subset_random_sampler(dataset, dataset_size):
     np.random.seed(random_seed)
     torch.manual_seed(random_seed)
 
-    print("Total dataset size:", len(dataset))
+    # print("Total dataset size:", len(dataset))
 
     indices = list(range(len(dataset)))    
     np.random.shuffle(indices)
     subset_len = int(len(dataset) * dataset_size)
     # print(indices[:subset_len])
 
-    print("Total Subset size:", subset_len)
+    # print("Total Subset size:", subset_len)
 
     # Use this to randomize the random subset (needed for accurate training)
     sampler = SubsetRandomSampler(indices[:subset_len])

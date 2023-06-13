@@ -69,7 +69,7 @@ class DiffusionRobustModel(nn.Module):
             _, d_classes = torch.max(d_out[1].data, 1)
             d_class = d_classes[0]
 
-            if self.image_num < 15:
+            if self.image_num < 30:
                 for idx, img in enumerate(d_imgs):
                     filename = self.sample_output_imgs_folder + f"/denoised_image_{self.image_num}_pred_{d_class}_true_{y[idx]}.png"
                     break
@@ -78,7 +78,7 @@ class DiffusionRobustModel(nn.Module):
             _, p_classes = torch.max(p_out[1].data, 1)
             p_class = p_classes[0]
 
-            if self.image_num < 15:
+            if self.image_num < 30:
                 for idx, img in enumerate(p_imgs):
                     filename = self.sample_output_imgs_folder + f"/pgd_image_{self.image_num}_pred_{p_class}_true_{y[idx]}.png"
                     save_image(img, filename)
