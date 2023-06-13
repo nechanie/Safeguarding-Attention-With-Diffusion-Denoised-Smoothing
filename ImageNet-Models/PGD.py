@@ -45,7 +45,9 @@ def pgd(input, labels, model, iters, epsilon, stepsize, loss = None):
 
 
 # TODO: test this func thoroughly
-def generate_adversarial_images(count, model, dataset, niter, epsilon, stepsize, randinit = False):
+def generate_adversarial_images(count, model, dataset, niter, epsilon, stepsize, save_path, randinit = False):
+    counts = [0 for _ in range(1000)]
+    class_map = json.load(open('imagenet_class_index.json', 'r'))
     loss = nn.CrossEntropyLoss().to(device)
     cleanImages = []
     advImages = []
@@ -54,20 +56,13 @@ def generate_adversarial_images(count, model, dataset, niter, epsilon, stepsize,
         inputs = entry['image'].to(device)
         labels = entry['label'].to(device)
                
-        cleanImages.append(inputs)
-        advImages.append(pgd(inputs, labels, model, niter, epsilon, stepsize, loss))
-        cleanLabels.append(labels)
-        if(DEBUG):
-            fig = plt.figure(figsize=(1, 2))
-            fig.add_subplot(1, 2, 1)
-            plt.imshow(inputs[0].permute(1, 2, 0).cpu().numpy())
-            fig.add_subplot(1, 2, 2)
-            plt.imshow((advImages[0][0]).permute(1,2,0).cpu().numpy())
-            plt.show()
-        if((i + 1) * args.batch_size >= count):
-            break
+        # cleanImages.append(inputs)
+        # advImages.append(pgd(inputs, labels, model, niter, epsilon, stepsize, loss))
+        # cleanLabels.append(labels)
 
-    return torch.cat(cleanImages), torch.cat(advImages), torch.cat(cleanLabels) #Concatenate all adv images into 1 4-d tensor instead of a list of smaller 4-d tensors with 1 block of data in them
+        save_all_adversarial_images(save_path, pgd(inputs, labels, model, niter, epsilon, stepsize, loss), labels, class_map, counts)
+
+    # return torch.cat(cleanImages), torch.cat(advImages), torch.cat(cleanLabels) #Concatenate all adv images into 1 4-d tensor instead of a list of smaller 4-d tensors with 1 block of data in them
 
 
 
@@ -84,22 +79,9 @@ def show(imgs):
     fig.show()
 
 
-def save_all_adversarial_images(dirname, images, labels):
-
-
-    class_map = json.load(open('imagenet_class_index.json', 'r'))
-
-    for idx in class_map.keys():
-        id_name = class_map[str(idx)][0]
-
-        new_folder = dirname + "/" + id_name
-        if not os.path.exists(new_folder):
-            os.makedirs(new_folder)
-
-    print("Writing adversarial images to files", flush=True)
-
-    counts = [0 for _ in range(1000)]
-    for idx in tqdm(range(args.PGD_image_count)):
+def save_all_adversarial_images(dirname, images, labels, class_map, counts):
+    
+    for idx in range(len(images)):
         label = labels[idx]
         new_label = class_map[str(label.item())][0]
         filename = dirname + "/" + new_label + "/" + str(counts[label.item()]) + ".png"

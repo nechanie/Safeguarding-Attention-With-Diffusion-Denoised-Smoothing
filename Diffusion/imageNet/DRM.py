@@ -86,29 +86,43 @@ class DiffusionRobustModel(nn.Module):
         self.image_num = 0
         self.sample_output_imgs_folder = sample_output_imgs_folder
 
-    def forward(self, x, t):
-        if self.image_num < 15:
-            for idx, img in enumerate(x):
-                filename = self.sample_output_imgs_folder + f"/original_image_{self.image_num}.png"
-                save_unnormalized_img(img, filename, self.data_config)
-                break
+    def forward(self, x, t, y):
 
-        imgs = self.denoise(x, t)
+        d_imgs = self.denoise(x, t)
 
-        if self.image_num < 15:
-            for idx, img in enumerate(imgs):
-                filename = self.sample_output_imgs_folder + f"/denoised_image_{self.image_num}.png"
-                save_unnormalized_img(img, filename, self.data_config)
-                break
+        d_imgs = torch.nn.functional.interpolate(d_imgs, (384, 384), mode='bilinear', antialias=True)
+        d_imgs = d_imgs.cuda()
 
-            self.image_num += 1
-
-        imgs = torch.nn.functional.interpolate(imgs, (384, 384), mode='bilinear', antialias=True)
-        imgs = imgs.cuda()
+        p_imgs = torch.nn.functional.interpolate(x, (384, 384), mode='bilinear', antialias=True)
+        d_imgs = torch.tensor(d_imgs).cuda()
+        p_imgs = torch.tensor(p_imgs).cuda()
         with torch.no_grad():
-            out = self.classifier(imgs)
+            d_out = self.classifier(d_imgs)
+            p_out = self.classifier(p_imgs)
+            
+            # Save denoised image and prediction:
+            _, d_classes = torch.max(d_out.data, 1)
+            d_class = d_classes[0]
 
-        return out
+            if self.image_num < 15:
+                for idx, img in enumerate(d_imgs):
+                    filename = self.sample_output_imgs_folder + f"/denoised_image_{self.image_num}_pred_{d_class}_true_{y[idx]}.png"
+                    save_unnormalized_img(img, filename, self.data_config)
+                    break
+
+            # Save pgd image and prediction:
+            _, p_classes = torch.max(p_out.data, 1)
+            p_class = p_classes[0]
+
+            if self.image_num < 15:
+                for idx, img in enumerate(p_imgs):
+                    filename = self.sample_output_imgs_folder + f"/pgd_image_{self.image_num}_pred_{p_class}_true_{y[idx]}.png"
+                    save_unnormalized_img(img, filename, self.data_config)
+                    break
+
+                self.image_num += 1
+        
+        return d_out, p_out
 
     def denoise(self, x_start, t, multistep=False):
         t_batch = torch.tensor([t] * len(x_start)).cuda()
