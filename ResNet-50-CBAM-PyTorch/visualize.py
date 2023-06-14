@@ -29,20 +29,21 @@ print("Model loaded!")
 
 model.eval()
 
-input_dataset = LoadDataset(dataset_folder_path=args.data_folder, image_size=args.img_size, image_depth=args.img_depth, train=False,
-                         transform=transforms.ToTensor())
+input_dataset = LoadDataset(dataset_folder_path=args.data_folder, image_size=args.img_size, image_depth=args.img_depth, 
+                            validate=False, train=False, transform=transforms.ToTensor())
 
 print("Dataset Size:", len(input_dataset))
-subset_sampler = get_subset_random_sampler(input_dataset, dataset_size=0.01)
+subset_sampler = get_subset_random_sampler(input_dataset, dataset_len=50)
 
 data_generator = DataLoader(input_dataset, batch_size=1, shuffle=False, num_workers=1, sampler=subset_sampler)
 
 print("Subset Size:", len(data_generator))
 
-class_names = ['buildings', 'forest', 'glacier', 'mountain', 'sea', 'street']
+# class_names = ['buildings', 'forest', 'glacier', 'mountain', 'sea', 'street']
+class_names = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
 
 pretrained_dir = '/'.join(args.pretrained_path.split('/')[:-1])
-output_folder = f'{pretrained_dir}/../vis_output_resnet_cbam' if args.use_cbam else f'{pretrained_dir}/../vis_output_resnet'
+output_folder = f'./vis_output_resnet_cbam' if args.use_cbam else f'./vis_output_resnet'
 
 if not os.path.exists(output_folder) : os.mkdir(output_folder)
 
