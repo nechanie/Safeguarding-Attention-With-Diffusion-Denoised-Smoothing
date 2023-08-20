@@ -1,6 +1,6 @@
 # Safeguarding Attention With Diffusion Denoised Smoothing
 
-Final Project for Machine Learning Security at OSU.
+Final Project for [Machine Learning Security at OSU](https://secure-ai.systems/courses/MLSec/Sp23/project.html).
 
 📄 Read our report: [here](https://github.com/mattmorgan6/Safeguarding-Attention-With-Diffusion-Denoised-Smoothing/blob/main/Safeguarding-Attention-With-Diffusion-Denoised-Smoothing.pdf)
 
